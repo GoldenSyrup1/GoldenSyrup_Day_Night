@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Day & Night</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --day-bg: #f5e6c8;
+      --day-sky: #87ceeb;
+      --day-text: #2c1810;
+      --day-accent: #e8a020;
+      --day-card: rgba(255,255,255,0.6);
+      --night-bg: #0a0a1a;
+      --night-sky: #0d0d2b;
+      --night-text: #e8e0f0;
+      --night-accent: #7b68ee;
+      --night-card: rgba(255,255,255,0.05);
+      --transition: 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+      cursor: none;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    body.day {
+      background: var(--day-bg);
+      color: var(--day-text);
+    }
+
+    body.night {
+      background: var(--night-bg);
+      color: var(--night-text);
+    }
+
+    /* Custom cursor */
+    .cursor {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: background 0.3s, transform 0.1s;
+    }
+
+    body.day .cursor { background: var(--day-accent); }
+    body.night .cursor { background: var(--night-accent); }
+
+    /* Sky gradient */
+    .sky {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 40vh;
+      z-index: 0;
+      transition: background var(--transition);
+    }
+
+    body.day .sky {
+      background: linear-gradient(180deg, #87ceeb 0%, #f5e6c8 100%);
+    }
+
+    body.night .sky {
+      background: linear-gradient(180deg, #0d0d2b 0%, #0a0a1a 100%);
+    }
+
+    /* Stars */
+    .stars {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity var(--transition);
+    }
+
+    body.day .stars { opacity: 0; }
+    body.night .stars { opacity: 1; }
+
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 2s infinite alternate;
+    }
+
+    @keyframes twinkle {
+      from { opacity: 0.3; transform: scale(1); }
+      to { opacity: 1; transform: scale(1.3); }
+    }
+
+    /* Main layout */
+    .container {
+      position: relative;
+      z-index: 10;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* Celestial body */
+    .celestial-wrap {
+      position: fixed;
+      top: 6vh;
+      right: 8vw;
+      z-index: 5;
+    }
+
+    .celestial {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      transition: all var(--transition);
+      cursor: pointer;
+      position: relative;
+    }
+
+    body.day .celestial {
+      background: radial-gradient(circle at 35% 35%, #fff5a0, #f4c020);
+      box-shadow: 0 0 40px 15px rgba(244, 192, 32, 0.5), 0 0 80px 30px rgba(244, 192, 32, 0.2);
+    }
+
+    body.night .celestial {
+      background: radial-gradient(circle at 35% 35%, #fff, #d0d0e8);
+      box-shadow: 0 0 20px 5px rgba(200, 200, 240, 0.3);
+    }
+
+    /* Moon craters */
+    .crater {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(180,180,200,0.4);
+      transition: opacity var(--transition);
+    }
+
+    body.day .crater { opacity: 0; }
+    body.night .crater { opacity: 1; }
+
+    /* Toggle button */
+    .toggle-btn {
+      position: fixed;
+      top: 2rem;
+      left: 2rem;
+      z-index: 100;
+      background: none;
+      border: 1.5px solid currentColor;
+      color: inherit;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      padding: 0.6rem 1.2rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.3s;
+    }
+
+    .toggle-btn:hover {
+      background: currentColor;
+    }
+
+    body.day .toggle-btn:hover { color: var(--day-bg); }
+    body.night .toggle-btn:hover { color: var(--night-bg); }
+
+    /* Hero text */
+    .hero {
+      padding-top: 15vh;
+    }
+
+    .eyebrow {
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      opacity: 0.5;
+      margin-bottom: 1.5rem;
+    }
+
+    .title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3.5rem, 8vw, 7rem);
+      line-height: 0.95;
+      margin-bottom: 2rem;
+      transition: color var(--transition);
+    }
+
+    .title .italic {
+      font-style: italic;
+      display: block;
+    }
+
+    body.day .title .accent { color: var(--day-accent); }
+    body.night .title .accent { color: var(--night-accent); }
+
+    .subtitle {
+      font-size: 0.85rem;
+      line-height: 1.8;
+      max-width: 420px;
+      opacity: 0.65;
+      margin-bottom: 3rem;
+    }
+
+    /* Cards */
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 4rem;
+      margin-bottom: 4rem;
+    }
+
+    .card {
+      padding: 1.8rem;
+      border: 1px solid currentColor;
+      border-opacity: 0.15;
+      transition: all 0.3s, background var(--transition), border-color var(--transition);
+    }
+
+    body.day .card {
+      background: var(--day-card);
+      border-color: rgba(44,24,16,0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    body.night .card {
+      background: var(--night-card);
+      border-color: rgba(232,224,240,0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+    }
+
+    body.day .card:hover { box-shadow: 6px 6px 0 var(--day-accent); }
+    body.night .card:hover { box-shadow: 6px 6px 0 var(--night-accent); }
+
+    .card-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      opacity: 0.4;
+      margin-bottom: 0.8rem;
+    }
+
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .card-body {
+      font-size: 0.75rem;
+      line-height: 1.7;
+      opacity: 0.6;
+    }
+
+    /* Time indicator */
+    .time-bar {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      opacity: 0.5;
+    }
+
+    .time-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      transition: background var(--transition);
+    }
+
+    body.day .time-dot { background: var(--day-accent); }
+    body.night .time-dot { background: var(--night-accent); animation: twinkle 1.5s infinite alternate; }
+
+    /* Horizon line */
+    .horizon {
+      position: fixed;
+      top: 40vh;
+      left: 0;
+      right: 0;
+      height: 1px;
+      z-index: 2;
+      transition: background var(--transition), opacity var(--transition);
+    }
+
+    body.day .horizon { background: linear-gradient(90deg, transparent, rgba(44,24,16,0.1), transparent); opacity: 1; }
+    body.night .horizon { background: linear-gradient(90deg, transparent, rgba(123,104,238,0.15), transparent); opacity: 1; }
+
+    /* Ground */
+    .ground {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 15vh;
+      z-index: 2;
+      transition: background var(--transition);
+    }
+
+    body.day .ground { background: linear-gradient(180deg, transparent, rgba(139,90,43,0.08)); }
+    body.night .ground { background: linear-gradient(180deg, transparent, rgba(10,5,30,0.5)); }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .cards { grid-template-columns: 1fr; }
+      .title { font-size: clamp(2.5rem, 12vw, 4rem); }
+      .celestial-wrap { top: 4vh; right: 4vw; }
+      .celestial { width: 55px; height: 55px; }
+    }
+  </style>
+</head>
+<body class="day">
+
+  <div class="cursor" id="cursor"></div>
+  <div class="sky"></div>
+  <div class="stars" id="stars"></div>
+  <div class="horizon"></div>
+  <div class="ground"></div>
+
+  <div class="celestial-wrap">
+    <div class="celestial" id="celestial" title="Click to toggle">
+      <div class="crater" style="width:12px;height:12px;top:20px;left:25px;"></div>
+      <div class="crater" style="width:8px;height:8px;top:40px;left:15px;"></div>
+      <div class="crater" style="width:6px;height:6px;top:28px;left:48px;"></div>
+    </div>
+  </div>
+
+  <button class="toggle-btn" id="toggleBtn">Switch to Night</button>
+
+  <div class="container">
+    <div class="hero">
+      <p class="eyebrow">A study in contrast</p>
+      <h1 class="title">
+        <span>Every</span>
+        <span class="italic accent" id="titleWord">Day</span>
+        <span>has its</span>
+        <span class="italic">Night.</span>
+      </h1>
+      <p class="subtitle" id="subtitle">
+        The sun rises not to erase the stars — only to remind you they were always there. Light and dark aren't opposites. They're the same silence, heard differently.
+      </p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <p class="card-label">The Day</p>
+        <h2 class="card-title">Clarity</h2>
+        <p class="card-body">When everything is visible, the work begins. Structure, motion, intention. The world shows its face and asks: what will you build today?</p>
+      </div>
+      <div class="card">
+        <p class="card-label">The Night</p>
+        <h2 class="card-title">Depth</h2>
+        <p class="card-body">When the noise fades, the real signals emerge. Ideas that couldn't breathe in daylight finally have room. The stars were always there.</p>
+      </div>
+      <div class="card">
+        <p class="card-label">The Threshold</p>
+        <h2 class="card-title">Transition</h2>
+        <p class="card-body">The most interesting moment isn't day or night — it's the instant between. When the sky can't decide. When everything is possible.</p>
+      </div>
+      <div class="card">
+        <p class="card-label">The Constant</p>
+        <h2 class="card-title">Rhythm</h2>
+        <p class="card-body">24 hours. Repeated without exception. The universe's oldest commitment — that what ends will return, and what returns will end again.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="time-bar">
+    <div class="time-dot"></div>
+    <span id="timeLabel">DAY MODE</span>
+  </div>
+
+  <script>
+    // Cursor
+    const cursor = document.getElementById('cursor');
+    document.addEventListener('mousemove', e => {
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top = e.clientY + 'px';
+    });
+
+    // Stars
+    const starsContainer = document.getElementById('stars');
+    for (let i = 0; i < 120; i++) {
+      const star = document.createElement('div');
+      star.classList.add('star');
+      const size = Math.random() * 2.5 + 0.5;
+      star.style.cssText = `
+        width: ${size}px;
+        height: ${size}px;
+        top: ${Math.random() * 60}%;
+        left: ${Math.random() * 100}%;
+        animation-delay: ${Math.random() * 3}s;
+        animation-duration: ${1.5 + Math.random() * 2}s;
+      `;
+      starsContainer.appendChild(star);
+    }
+
+    // Toggle
+    let isDay = true;
+    const body = document.body;
+    const toggleBtn = document.getElementById('toggleBtn');
+    const celestial = document.getElementById('celestial');
+    const titleWord = document.getElementById('titleWord');
+    const subtitle = document.getElementById('subtitle');
+    const timeLabel = document.getElementById('timeLabel');
+
+    function toggle() {
+      isDay = !isDay;
+      if (isDay) {
+        body.classList.replace('night', 'day');
+        toggleBtn.textContent = 'Switch to Night';
+        titleWord.textContent = 'Day';
+        timeLabel.textContent = 'DAY MODE';
+        subtitle.textContent = 'The sun rises not to erase the stars — only to remind you they were always there. Light and dark aren\'t opposites. They\'re the same silence, heard differently.';
+      } else {
+        body.classList.replace('day', 'night');
+        toggleBtn.textContent = 'Switch to Day';
+        titleWord.textContent = 'Night';
+        timeLabel.textContent = 'NIGHT MODE';
+        subtitle.textContent = 'The stars don\'t appear when night falls. They were always there — the day just made them invisible. Some truths only show themselves in the dark.';
+      }
+    }
+
+    toggleBtn.addEventListener('click', toggle);
+    celestial.addEventListener('click', toggle);
+
+    // Keyboard shortcut
+    document.addEventListener('keydown', e => {
+      if (e.key === 'd' || e.key === 'D' || e.key === 'n' || e.key === 'N') toggle();
+    });
+  </script>
+</body>
+</html>
